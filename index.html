@@ -108,6 +108,13 @@ h2 em, h1 em { font-style: normal; color: var(--purple); }
 .reset { appearance: none; border: 1px solid var(--rule); background: none; border-radius: 999px; padding: 3px 12px; font-size: 13px; cursor: pointer; color: var(--ink); }
 .reset:hover { background: var(--grey-l); }
 .reset[hidden] { display: none; }
+.sheet-btn { appearance: none; border: 0; background: var(--purple); color: #fff; border-radius: 999px; padding: 8px 18px; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.sheet-btn:hover { filter: brightness(1.08); }
+.sheet-btn:focus-visible { outline: 3px solid var(--purple-l); outline-offset: 2px; }
+.sheet-btn .n { font-weight: 500; font-size: 13px; opacity: .85; }
+.sheet-btn.on { background: var(--green); color: var(--ink); }
+.stat.sheet .src-tag { display: inline-block; }
+@media (max-width: 600px) { .edit-row > span { display: none; } .sheet-btn { font-size: 14px; padding: 7px 14px; } }
 .heap-wrap { flex: 1; min-height: 120px; display: flex; flex-direction: column; justify-content: flex-end; margin-top: 16px; }
 .heap { width: 100%; height: 100%; max-height: 34vh; display: block; }
 .cap { font-size: 12px; color: var(--ink-3); margin-top: 6px; display: flex; gap: 14px; flex-wrap: wrap; }
@@ -314,7 +321,7 @@ body.on-purple .next { background: var(--green); color: var(--ink); box-shadow: 
       <div class="stat" data-k="g"><label class="val"><span class="sizer"><input id="iG" size="1" inputmode="numeric" autocomplete="off" aria-label="모은 조각 무게(g)"></span><span class="unit">g</span></label><span>모은 조각 무게<b class="src-tag">직접 입력</b></span></div>
       <div class="stat hot"><span class="val"><span class="num" id="sTrashG">0</span><span class="unit">g</span></span><span>종량제봉투로 가는 무게</span><small class="sub" id="sSec"></small></div>
     </div>
-    <div class="edit-row"><span>장난감 수와 무게는 숫자를 눌러 직접 고칠 수 있습니다. 고친 값이 모든 쪽에 바로 반영됩니다.</span><button class="reset" id="reset" hidden>↺ 제출된 값으로 되돌리기</button></div>
+    <div class="edit-row"><button class="sheet-btn" id="useSheet" aria-pressed="false">오늘 우리가 뜯어본 장난감들 <span class="n" id="sheetN"></span></button><span>숫자를 눌러 직접 고치거나, 버튼을 눌러 제출된 응답 합계로 계산합니다. 모든 쪽에 바로 반영됩니다.</span><button class="reset" id="reset" hidden>↺ 0으로 비우기</button></div>
     <div class="heap-wrap">
       <div class="stage" id="coverRain" aria-label="프랑스에서 1초에 1.3개씩 버려지는 장난감과 오늘 우리가 뜯은 장난감"></div>
       <div class="cap cover-cap"><span id="coverCap"></span><button class="tease" id="tease">프랑스가 그렇다면, <b>한국은 어떨까요?</b> →</button></div>
@@ -578,13 +585,16 @@ let sums = {}, groupSums = {}, total = 0, toyCount = 0, shareWeights = [0, 0, 0]
 const seen = new Set();
 
 // ----- 표지 직접 입력 -----
-// 비워 두면(null) 제출된 응답 값을 쓴다. 이 기기 브라우저에만 저장된다.
+// 비워 두면(null) 0, 시트 반영(sheet) 중이면 응답 합계를 쓴다. 이 기기 브라우저에만 저장된다.
 const MANUAL_KEY = 'toyTeardown.manual.v2';
-let manual = { toys: null, g: null, pct: null };
+// sheet: true면 비어 있는 칸을 응답 시트 합계(장난감 수 = 응답 수, 무게 = 재질 무게 합)로 채운다
+let manual = { toys: null, g: null, pct: null, sheet: false };
 try { manual = { ...manual, ...JSON.parse(localStorage.getItem(MANUAL_KEY) || '{}') }; } catch (e) {}
 const saveManual = () => { try { localStorage.setItem(MANUAL_KEY, JSON.stringify(manual)); } catch (e) {} };
 manual.pct = null; // 비율은 직접 입력하지 않고 제출된 응답을 따른다
-const hasManual = () => manual.toys != null || manual.g != null || manual.pct != null;
+const hasManual = () => manual.toys != null || manual.g != null || manual.pct != null || manual.sheet;
+let liveTotal = 0; // 제출된 응답의 재질 무게 합(g)
+const sheetVal = key => manual.sheet ? (key === 'toys' ? rows.length : liveTotal) : 0;
 
 // 제출된 응답이 없을 때 재질 비율의 기본값(샘플 6건 합계)
 const DEFAULT_SUMS = Object.fromEntries(MATERIALS.map(m => [m.key, SAMPLE.reduce((a, r) => a + (Number(r[m.key]) || 0), 0)]));
@@ -599,8 +609,8 @@ function compute() {
   const live = Object.fromEntries(MATERIALS.map(m => [m.key, 0]));
   rows.forEach(r => MATERIALS.forEach(m => live[m.key] += Number(r[m.key]) || 0));
   const liveGroup = groupOf(live);
-  const liveTotal = GROUPS.reduce((a, g) => a + liveGroup[g], 0);
-  toyCount = manual.toys != null ? manual.toys : 0; // 직접 입력하지 않으면 0개
+  liveTotal = GROUPS.reduce((a, g) => a + liveGroup[g], 0);
+  toyCount = manual.toys != null ? manual.toys : sheetVal('toys'); // 직접 입력·시트 반영 전에는 0개
 
   if (manual.g == null && manual.pct == null) {
     sums = live; groupSums = liveGroup; total = liveTotal;
@@ -632,7 +642,7 @@ const hasShares = () => shareWeights.some(v => v > 0);
 function renderCover(animate) {
   countUp($('#iToys'), toyCount, { render: fmt });
   // 표지 무게는 직접 입력한 값만 쓴다. 입력 전에는 0g (제출 합계는 다른 쪽에서 보여 줌)
-  const coverG = manual.g != null ? manual.g : 0;
+  const coverG = manual.g != null ? manual.g : sheetVal('g');
   const shareSum = shareWeights.reduce((a, b) => a + b, 0);
   countUp($('#iG'), coverG, { render: fmt });
   countUp($('#sTrashG'), shareSum ? coverG * shareWeights[2] / shareSum : 0, { render: fmt });
@@ -643,7 +653,16 @@ function renderCover(animate) {
   $('#sSec').innerHTML = coverG
     ? `오늘 모은 ${grams(coverG)}은 국내에서 <b>약 ${secText}</b>마다 버려지는 양 (연 5만 톤 추정 기준)`
     : '무게를 입력하면 국내 배출량과 비교합니다.';
-  $$('.stat[data-k]').forEach(s => s.classList.toggle('manual', manual[s.dataset.k] != null));
+  $$('.stat[data-k]').forEach(s => {
+    const own = manual[s.dataset.k] != null;
+    s.classList.toggle('manual', own);
+    s.classList.toggle('sheet', !own && manual.sheet);
+    s.querySelector('.src-tag').textContent = own ? '직접 입력' : '응답 합계';
+  });
+  const sb = $('#useSheet');
+  sb.classList.toggle('on', !!manual.sheet);
+  sb.setAttribute('aria-pressed', String(!!manual.sheet));
+  $('#sheetN').textContent = rows.length ? `응답 ${fmt(rows.length)}건 · ${grams(liveTotal)}` : '아직 응답 없음';
   $('#reset').hidden = !hasManual();
   updateCoverRain();
 }
@@ -1081,7 +1100,7 @@ Object.entries(INPUTS).forEach(([key, sel]) => {
   el.addEventListener('input', () => { fitInput(el); el.dataset.dirty = 1; clearTimeout(typing); typing = setTimeout(() => applyManual(key, el), 400); });
   el.addEventListener('keydown', e => {
     if (e.key === 'Enter') el.blur();
-    if (e.key === 'Escape') { el.value = ''; el.dataset.dirty = 1; el.blur(); } // 칸을 비우면 제출된 값으로 돌아간다
+    if (e.key === 'Escape') { el.value = ''; el.dataset.dirty = 1; el.blur(); } // 칸을 비우면 0(시트 반영 중이면 응답 합계)으로 돌아간다
   });
   el.addEventListener('blur', () => {
     clearTimeout(typing);
@@ -1089,8 +1108,15 @@ Object.entries(INPUTS).forEach(([key, sel]) => {
     renderCover(false);
   });
 });
+$('#useSheet').addEventListener('click', () => {
+  // 직접 입력한 값을 지우고 응답 시트 합계로 전체를 다시 계산한다 (이후 새 응답도 15초마다 반영)
+  manual = { toys: null, g: null, pct: null, sheet: true };
+  saveManual();
+  renderAll();
+  renderCover(true);
+});
 $('#reset').addEventListener('click', () => {
-  manual = { toys: null, g: null, pct: null };
+  manual = { toys: null, g: null, pct: null, sheet: false };
   saveManual();
   renderAll();
   renderCover(true);
