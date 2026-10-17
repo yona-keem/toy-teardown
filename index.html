@@ -116,12 +116,31 @@ h2 em, h1 em { font-style: normal; color: var(--purple); }
 .stat.sheet .src-tag { display: inline-block; }
 .row-pick { display: inline-flex; align-items: center; gap: 6px; }
 .row-pick input { width: 6.5em; font: inherit; font-size: 14px; color: var(--ink); background: none; border: 1px solid var(--rule); border-radius: 999px; padding: 6px 12px; outline: none; }
+.row-pick input.short { width: 5em; }
 .row-pick input:focus { border-color: var(--purple); background: var(--purple-l); }
 .row-btn { appearance: none; border: 2px solid var(--purple); background: none; color: var(--purple); border-radius: 999px; padding: 5px 14px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .row-btn:hover { background: var(--purple-l); }
 .row-btn.on { background: var(--green); border-color: var(--green); color: var(--ink); }
 .row-msg { font-size: 13px; color: var(--ink-2); }
 .row-msg.err { color: var(--purple); font-weight: 700; }
+/* 분리배출 안내 */
+.howto-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 10px; }
+.badge { display: inline-block; background: var(--green); color: #000; font-weight: 700; font-size: 13px; border-radius: 999px; padding: 4px 12px; }
+.before { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; font-size: 14px; color: var(--ink-2); }
+.before b { color: var(--ink); }
+.before .st { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--rule); border-radius: 999px; padding: 3px 12px 3px 4px; }
+.before .st i { font-style: normal; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: var(--bg, #fff); display: grid; place-items: center; font-size: 11px; font-weight: 700; font-family: var(--f-num); }
+.routes { flex: 1; min-height: 0; overflow-y: auto; margin-top: clamp(12px, 2.4vh, 26px); display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 20px; align-content: start; }
+.route { border-top: 6px solid var(--c); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.route .what { font-weight: 700; font-size: clamp(15px, 1.3vw, 18px); }
+.route .to { font-family: var(--f-head); font-size: clamp(22px, 2.3vw, 34px); line-height: 1.15; color: var(--c-t, var(--c)); }
+.route .eg { font-size: 13px; color: var(--ink-3); }
+.route ul { margin: 2px 0 0; padding-left: 1.1em; font-size: 14px; color: var(--ink-2); display: grid; gap: 3px; }
+.route ul b { color: var(--ink); }
+.route .pile { height: 34px; display: flex; align-items: flex-end; gap: 3px; flex-wrap: wrap; align-content: flex-end; }
+.route .pile span { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
+@media (max-width: 1000px) { .routes { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .routes { grid-template-columns: 1fr; } .route .pile { display: none; } .before { font-size: 13px; } }
 .m-br { display: none; }
 @media (max-width: 600px) { .m-br { display: inline; } }
 @media (max-width: 600px) { .edit-row > span:not(.row-pick):not(.row-msg) { display: none; } .sheet-btn { font-size: 14px; padding: 7px 14px; } }
@@ -331,7 +350,7 @@ body.on-purple .next { background: var(--green); color: var(--ink); box-shadow: 
       <div class="stat" data-k="g"><label class="val"><span class="sizer"><input id="iG" size="1" inputmode="numeric" autocomplete="off" aria-label="모은 조각 무게(g)"></span><span class="unit">g</span></label><span>모은 조각 무게<b class="src-tag">직접 입력</b></span></div>
       <div class="stat hot"><span class="val"><span class="num" id="sTrashG">0</span><span class="unit">g</span></span><span>종량제봉투로 가는 무게</span><small class="sub" id="sSec"></small></div>
     </div>
-    <div class="edit-row"><button class="sheet-btn" id="useSheet" aria-pressed="false">오늘 우리가 뜯어본 장난감들 <span class="n" id="sheetN"></span></button><span class="row-pick"><input id="rowNo" inputmode="numeric" autocomplete="off" placeholder="시트 행 번호" aria-label="응답 시트 행 번호"><button class="row-btn" id="useRow" aria-pressed="false">이 행만 반영</button></span><span class="row-msg" id="rowMsg" aria-live="polite"></span><span>숫자를 눌러 직접 고치거나, 버튼을 눌러 제출된 응답 합계로 계산합니다. 모든 쪽에 바로 반영됩니다.</span><button class="reset" id="reset" hidden>↺ 0으로 비우기</button></div>
+    <div class="edit-row" title="숫자를 눌러 직접 고치거나, 버튼으로 응답 시트의 전체·한 행·여러 행 합계를 반영합니다. 모든 쪽에 바로 반영됩니다."><button class="sheet-btn" id="useSheet" aria-pressed="false">오늘 우리가 뜯어본 장난감들 <span class="n" id="sheetN"></span></button><span class="row-pick"><input id="rowNo" inputmode="numeric" autocomplete="off" placeholder="시트 행 번호" aria-label="응답 시트 행 번호"><button class="row-btn" id="useRow" aria-pressed="false">이 행만 반영</button></span><span class="row-pick"><input id="rangeFrom" class="short" inputmode="numeric" autocomplete="off" placeholder="시작 행" aria-label="더할 첫 행 번호"><span aria-hidden="true">~</span><input id="rangeTo" class="short" inputmode="numeric" autocomplete="off" placeholder="끝 행" aria-label="더할 마지막 행 번호"><button class="row-btn" id="useRange" aria-pressed="false">이 범위만 더해 반영</button></span><span class="row-msg" id="rowMsg" aria-live="polite"></span><button class="reset" id="reset" hidden>↺ 0으로 비우기</button></div>
     <div class="heap-wrap">
       <div class="stage" id="coverRain" aria-label="프랑스에서 1초에 1.3개씩 버려지는 장난감과 오늘 우리가 뜯은 장난감"></div>
       <div class="cap cover-cap"><span id="coverCap"></span><button class="tease" id="tease">프랑스가 그렇다면, <b>한국은 어떨까요?</b> →</button></div>
@@ -366,13 +385,13 @@ body.on-purple .next { background: var(--green); color: var(--ink); box-shadow: 
 </section>
 
 <!-- 2. 세 갈래 -->
-<section class="slide" data-id="bins" data-ko="버리는 길은 세 갈래" data-en="Where the parts go" data-desc="점 하나는 오늘 모은 전체 무게의 1%입니다. 재질마다 버리는 길이 다릅니다. 장난감 플라스틱은 여러 소재가 섞이고 재활용 표시 대상이 아니어서 대부분 종량제봉투로 갑니다.">
+<section class="slide" data-id="bins" data-ko="버리는 길은 세 갈래" data-en="Where the parts go" data-desc="점 하나는 오늘 모은 전체 무게의 1%입니다. 재질마다 버리는 길이 다릅니다. 2026년부터 플라스틱 장난감도 생산자책임재활용제도(EPR) 대상이 되어 플라스틱 조각은 플라스틱류로 분리배출합니다. 떼어낼 수 없는 혼합재질·고무·기름 묻은 재질만 종량제봉투로 갑니다.">
   <div class="body">
     <h2>조각 100개를<br>세 통에 나누면</h2>
     <div class="bins" id="bins">
-      <div class="bin" data-g="recycle"><svg preserveAspectRatio="xMidYMax meet" role="img"></svg><div class="bin-label"><span class="name"><i style="background:var(--recycle)"></i>분리배출</span><span class="num">0%</span><span class="g"></span><small>쇠 · 유리 · 종이</small></div></div>
+      <div class="bin" data-g="recycle"><svg preserveAspectRatio="xMidYMax meet" role="img"></svg><div class="bin-label"><span class="name"><i style="background:var(--recycle)"></i>분리배출</span><span class="num">0%</span><span class="g"></span><small>플라스틱 · 쇠 · 유리 · 종이</small></div></div>
       <div class="bin" data-g="ewaste"><svg preserveAspectRatio="xMidYMax meet" role="img"></svg><div class="bin-label"><span class="name"><i style="background:var(--ewaste)"></i>전자·전지 별도 수거</span><span class="num">0%</span><span class="g"></span><small>모터 · 회로판 · 스피커 · 전선 · 배터리</small></div></div>
-      <div class="bin" data-g="trash"><svg preserveAspectRatio="xMidYMax meet" role="img"></svg><div class="bin-label"><span class="name"><i style="background:var(--trash)"></i>종량제봉투 → 소각·매립</span><span class="num">0%</span><span class="g"></span><small>플라스틱 · 혼합재질 · 고무 · 기름 묻은 재질 · 기타</small></div></div>
+      <div class="bin" data-g="trash"><svg preserveAspectRatio="xMidYMax meet" role="img"></svg><div class="bin-label"><span class="name"><i style="background:var(--trash)"></i>종량제봉투 → 소각·매립</span><span class="num">0%</span><span class="g"></span><small>혼합재질 · 고무 · 기름 묻은 재질 · 기타</small></div></div>
     </div>
   </div>
 </section>
@@ -462,7 +481,45 @@ body.on-purple .next { background: var(--green); color: var(--ink); box-shadow: 
   </div>
 </section>
 
-<!-- 7. 마무리 -->
+<!-- 분리배출 안내 (2026 EPR 기준) -->
+<section class="slide" data-id="howto" data-ko="이렇게 버려요" data-en="How to discard" data-desc="2026년 1월 1일부터 플라스틱 장난감도 생산자책임재활용제도(EPR) 대상이 되었습니다. 생산자가 재활용 비용을 내고, 시민은 재질에 맞게 나눠 버리면 됩니다. 지역마다 배출 요일·방법이 다를 수 있으니 사는 곳의 구청 안내도 확인해 주세요.">
+  <div class="body">
+    <h2>다 뜯어본 장난감,<br><em>이렇게</em> 버려요</h2>
+    <div class="howto-top">
+      <span class="badge">2026.1.1부터 플라스틱 장난감도 EPR 대상</span>
+      <div class="before"><b>버리기 전에</b><span class="st"><i>1</i>고치고 나눌 수 있는지</span><span class="st"><i>2</i>건전지 빼기</span><span class="st"><i>3</i>떼어지는 다른 재질 떼기</span></div>
+    </div>
+    <div class="routes">
+      <div class="route" style="--c:var(--recycle)">
+        <span class="what">플라스틱 장난감</span>
+        <span class="to">플라스틱류로 분리배출</span>
+        <span class="eg">블록 · 피규어 · 소꿉놀이 · 프라모델 · 물총 · 보드게임 말</span>
+        <ul><li>비닐봉지에 담아 <b>플라스틱 용기·트레이류와 함께</b></li><li>종량제봉투에 넣지 않아요</li></ul>
+      </div>
+      <div class="route" style="--c:var(--ewaste);--c-t:#8A7A2E">
+        <span class="what">전기·배터리 장난감</span>
+        <span class="to">소형가전 수거함</span>
+        <span class="eg">RC카 · 말하는 인형 · 불빛 칼 · 전자 피아노</span>
+        <ul><li>빼낸 건전지는 <b>폐건전지 수거함</b></li><li>배터리가 안 빠지면 <b>통째로 폐전지 수거함</b></li><li>5개 이상이면 <b>무상 방문수거</b> 1599-0903</li><li>화재 위험! 종량제봉투 금지</li></ul>
+      </div>
+      <div class="route" style="--c:var(--trash)">
+        <span class="what">떼어낼 수 없는 복합재질</span>
+        <span class="to">종량제봉투</span>
+        <span class="eg">봉제인형 · 파티 소품(가발·가장복) · 나무·쇠가 붙어 안 떨어지는 장난감</span>
+        <ul><li>큰 것은 <b>특수규격마대</b>에</li></ul>
+      </div>
+      <div class="route" style="--c:var(--ink)">
+        <span class="what">커다란 장난감</span>
+        <span class="to">대형폐기물 신고</span>
+        <span class="eg">미끄럼틀 · 타는 자동차 · 트램펄린</span>
+        <ul><li>구청 누리집이나 앱에서 신고하고 스티커 붙이기</li></ul>
+      </div>
+    </div>
+    <p class="foot">출처: <a href="https://www.korea.kr/briefing/pressReleaseView.do?newsId=156735371" target="_blank" rel="noopener">기후에너지환경부 보도자료(2025.12.16)</a> 「완구류 생산자책임재활용제도(EPR) 도입」 — 자원재활용법 시행령 개정, 2026.1.1 시행, 플라스틱 완구 18종 편입 · <a href="https://news.seoul.go.kr/env/archives/567222" target="_blank" rel="noopener">서울시 장난감 분리배출 안내</a>. 쓸 만한 장난감은 서울생활용플라자 등에 기부할 수 있습니다.</p>
+  </div>
+</section>
+
+<!-- 마무리 -->
 <section class="slide purple" data-id="closing" data-ko="마치며" data-en="Closing" data-desc="">
   <div class="body">
     <div class="closing">
@@ -498,7 +555,7 @@ const FORCE_SAMPLE = new URLSearchParams(location.search).has('sample');
 
 // 재질 → 배출 경로. 분류를 바꾸려면 g 값만 바꾸면 됩니다.
 const MATERIALS = [
-  { key: 'plastic', label: '플라스틱', g: 'trash' },
+  { key: 'plastic', label: '플라스틱', g: 'recycle' }, // 2026.1.1부터 플라스틱 완구 EPR 편입 → 플라스틱류 분리배출
   { key: 'mixed',   label: '혼합재질', g: 'trash' },
   { key: 'rubber',  label: '고무', g: 'trash' },
   { key: 'oily',    label: '기름 묻은 재질', g: 'trash' },
@@ -614,8 +671,8 @@ const seen = new Set();
 // 비워 두면(null) 0, 시트 반영(sheet) 중이면 응답 합계를 쓴다. 이 기기 브라우저에만 저장된다.
 const MANUAL_KEY = 'toyTeardown.manual.v2';
 // sheet: true면 비어 있는 칸을 응답 시트 합계(장난감 수 = 응답 수, 무게 = 재질 무게 합)로 채운다
-// row: 응답 시트 행 번호. 정하면 그 행 하나만으로 계산한다
-let manual = { toys: null, g: null, pct: null, sheet: false, row: null };
+// row: 응답 시트 행 번호. 정하면 그 행 하나만으로 계산한다. rowTo까지 정하면 row~rowTo 행을 더한다
+let manual = { toys: null, g: null, pct: null, sheet: false, row: null, rowTo: null };
 try { manual = { ...manual, ...JSON.parse(localStorage.getItem(MANUAL_KEY) || '{}') }; } catch (e) {}
 const saveManual = () => { try { localStorage.setItem(MANUAL_KEY, JSON.stringify(manual)); } catch (e) {} };
 manual.pct = null; // 비율은 직접 입력하지 않고 제출된 응답을 따른다
@@ -623,7 +680,13 @@ const hasManual = () => manual.toys != null || manual.g != null || manual.pct !=
 let liveTotal = 0; // 제출된 응답의 재질 무게 합(g)
 // 시트 행 번호 → 응답. 1행은 제목이라 2행이 첫 응답 (웹앱이 row를 주면 그 값을 쓴다)
 const rowAt = n => rows.some(r => r.row) ? rows.find(r => Number(r.row) === n) : rows[n - 2];
-const usedRows = () => manual.row != null ? [rowAt(manual.row)].filter(Boolean) : rows;
+const isRange = () => manual.row != null && manual.rowTo != null;
+const rowsBetween = (a, b) => rows.some(r => r.row)
+  ? rows.filter(r => Number(r.row) >= a && Number(r.row) <= b)
+  : rows.slice(Math.max(0, a - 2), Math.max(0, b - 1));
+const usedRows = () => isRange() ? rowsBetween(manual.row, manual.rowTo)
+  : manual.row != null ? [rowAt(manual.row)].filter(Boolean) : rows;
+const rowLabel = () => isRange() ? `${manual.row}~${manual.rowTo}행` : manual.row + '행';
 const fromSheet = () => manual.sheet || manual.row != null;
 const sheetVal = key => fromSheet() ? (key === 'toys' ? usedRows().length : liveTotal) : 0;
 
@@ -688,20 +751,28 @@ function renderCover(animate) {
     const own = manual[s.dataset.k] != null;
     s.classList.toggle('manual', own);
     s.classList.toggle('sheet', !own && fromSheet());
-    s.querySelector('.src-tag').textContent = own ? '직접 입력' : manual.row != null ? manual.row + '행' : '응답 합계';
+    s.querySelector('.src-tag').textContent = own ? '직접 입력' : manual.row != null ? rowLabel() : '응답 합계';
   });
   const sheetOn = !!manual.sheet && manual.row == null;
   const sb = $('#useSheet');
   sb.classList.toggle('on', sheetOn);
   sb.setAttribute('aria-pressed', String(sheetOn));
-  const rb = $('#useRow'), rowOn = manual.row != null;
-  rb.classList.toggle('on', rowOn);
-  rb.setAttribute('aria-pressed', String(rowOn));
-  if (rowOn && document.activeElement !== $('#rowNo')) $('#rowNo').value = manual.row;
+  const rowOn = manual.row != null && !isRange(), rangeOn = isRange();
+  [['#useRow', rowOn], ['#useRange', rangeOn]].forEach(([sel, on]) => {
+    $(sel).classList.toggle('on', on);
+    $(sel).setAttribute('aria-pressed', String(on));
+  });
+  const keep = (sel, v) => { if (document.activeElement !== $(sel)) $(sel).value = v; };
+  if (rowOn) keep('#rowNo', manual.row);
+  if (rangeOn) { keep('#rangeFrom', manual.row); keep('#rangeTo', manual.rowTo); }
   if (rowOn) {
     const r = rowAt(manual.row);
     $('#rowMsg').className = 'row-msg' + (r ? '' : ' err');
     $('#rowMsg').textContent = r ? `${manual.row}행 · ${r.toy} · ${grams(liveTotal)}` : `${manual.row}행에 아직 응답이 없습니다`;
+  } else if (rangeOn) {
+    const n = usedRows().length;
+    $('#rowMsg').className = 'row-msg' + (n ? '' : ' err');
+    $('#rowMsg').textContent = n ? `${rowLabel()} · ${fmt(n)}건 · ${grams(liveTotal)}` : `${rowLabel()}에 아직 응답이 없습니다`;
   } else if (!$('#rowMsg').classList.contains('err')) $('#rowMsg').textContent = '';
   const allG = rows.reduce((a, r) => a + MATERIALS.reduce((b, m) => b + (Number(r[m.key]) || 0), 0), 0);
   $('#sheetN').textContent = rows.length ? `응답 ${fmt(rows.length)}건 · ${grams(allG)}` : '아직 응답 없음';
@@ -1166,8 +1237,8 @@ Object.entries(INPUTS).forEach(([key, sel]) => {
 });
 $('#useSheet').addEventListener('click', () => {
   // 직접 입력한 값을 지우고 응답 시트 합계로 전체를 다시 계산한다 (이후 새 응답도 15초마다 반영)
-  manual = { toys: null, g: null, pct: null, sheet: true, row: null };
-  $('#rowNo').value = ''; $('#rowMsg').className = 'row-msg'; $('#rowMsg').textContent = '';
+  manual = { toys: null, g: null, pct: null, sheet: true, row: null, rowTo: null };
+  clearRowInputs();
   saveManual();
   renderAll();
   renderCover(true);
@@ -1179,17 +1250,40 @@ function useRow() {
   msg.className = 'row-msg err';
   if (!n || n < 2) { msg.textContent = '2행부터 입력해 주세요 (1행은 제목 줄)'; return; }
   if (!rowAt(n)) { msg.textContent = `${n}행에 아직 응답이 없습니다`; return; }
-  manual = { toys: null, g: null, pct: null, sheet: false, row: n };
+  manual = { toys: null, g: null, pct: null, sheet: false, row: n, rowTo: null };
+  $('#rangeFrom').value = ''; $('#rangeTo').value = '';
   saveManual();
   renderAll();
   renderCover(true);
 }
 $('#useRow').addEventListener('click', useRow);
+// 시작 행~끝 행의 응답을 더해서 반영한다
+function useRange() {
+  const num = sel => parseInt($(sel).value.replace(/[^\d]/g, ''), 10);
+  let a = num('#rangeFrom'), b = num('#rangeTo');
+  const msg = $('#rowMsg');
+  msg.className = 'row-msg err';
+  if (!a || !b) { msg.textContent = '시작 행과 끝 행을 모두 입력해 주세요'; return; }
+  if (a > b) [a, b] = [b, a];
+  if (a < 2) { msg.textContent = '2행부터 입력해 주세요 (1행은 제목 줄)'; return; }
+  if (!rowsBetween(a, b).length) { msg.textContent = `${a}~${b}행에 아직 응답이 없습니다`; return; }
+  manual = { toys: null, g: null, pct: null, sheet: false, row: a, rowTo: b };
+  $('#rowNo').value = '';
+  saveManual();
+  renderAll();
+  renderCover(true);
+}
+function clearRowInputs() {
+  ['#rowNo', '#rangeFrom', '#rangeTo'].forEach(sel => { $(sel).value = ''; });
+  $('#rowMsg').className = 'row-msg'; $('#rowMsg').textContent = '';
+}
+$('#useRange').addEventListener('click', useRange);
+['#rangeFrom', '#rangeTo'].forEach(sel => $(sel).addEventListener('keydown', e => { if (e.key === 'Enter') useRange(); }));
 $('#rowNo').addEventListener('keydown', e => { if (e.key === 'Enter') useRow(); });
 
 $('#reset').addEventListener('click', () => {
-  manual = { toys: null, g: null, pct: null, sheet: false, row: null };
-  $('#rowNo').value = ''; $('#rowMsg').className = 'row-msg'; $('#rowMsg').textContent = '';
+  manual = { toys: null, g: null, pct: null, sheet: false, row: null, rowTo: null };
+  clearRowInputs();
   saveManual();
   renderAll();
   renderCover(true);
