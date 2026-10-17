@@ -114,6 +114,8 @@ h2 em, h1 em { font-style: normal; color: var(--purple); }
 .sheet-btn .n { font-weight: 500; font-size: 13px; opacity: .85; }
 .sheet-btn.on { background: var(--green); color: var(--ink); }
 .stat.sheet .src-tag { display: inline-block; }
+.m-br { display: none; }
+@media (max-width: 600px) { .m-br { display: inline; } }
 @media (max-width: 600px) { .edit-row > span { display: none; } .sheet-btn { font-size: 14px; padding: 7px 14px; } }
 .heap-wrap { flex: 1; min-height: 120px; display: flex; flex-direction: column; justify-content: flex-end; margin-top: 16px; }
 .heap { width: 100%; height: 100%; max-height: 34vh; display: block; }
@@ -399,6 +401,22 @@ body.on-purple .next { background: var(--green); color: var(--ink); box-shadow: 
       <div class="cap"><span class="k"><i style="background:var(--purple)"></i>장난감 6%</span><span class="k"><i style="background:var(--grey)"></i>그 밖의 매립 플라스틱 94%</span></div>
     </div>
     <p class="foot">출처: <a href="https://environment-review.yale.edu/most-materials-are-recyclable-so-why-cant-childrens-toys-be-sustainable" target="_blank" rel="noopener">Yale Environment Review(2023)</a> · Levesque 외(2022)가 인용한 Ejlertsson 외(2003). 20여 년 전 연구에 근거한 수치입니다.</p>
+  </div>
+</section>
+
+<!-- 전 세계 전자 장난감 73억 개 -->
+<section class="slide black" data-id="etoys" data-ko="전자 장난감" data-en="E-toys" data-desc="불빛·소리·모터·배터리가 들어간 전자 장난감은 2022년 한 해 전 세계에서 약 73억 개, 약 320만 톤이 버려졌습니다. 제대로 재활용되는 건 약 10%로 추정됩니다.">
+  <div class="body">
+    <h2>2022년 한 해, 전 세계에서<br>전자 장난감 <em>73억 개</em>가<br class="m-br"> 버려졌습니다</h2>
+    <div class="ticker">
+      <div><span class="num" id="nEtoy">0</span><p>개 · 지구인 1명당 거의 1개</p></div>
+      <div><span class="num" id="tEtoy">0</span><p>톤 · 5톤 트럭 약 64만 대 분량</p></div>
+    </div>
+    <div class="heap-wrap" style="flex:1">
+      <svg class="heap" id="etoyHeap" preserveAspectRatio="xMidYMax meet" role="img" aria-label="점 64개 더미. 점 하나는 국내 플라스틱 장난감 한 해 배출량 5만 톤"></svg>
+      <div class="cap"><span class="k"><i style="background:var(--green)"></i>점 1개 = 5만 톤, 한국에서 한 해 버려지는 플라스틱 장난감 전부</span><span class="k"><i style="background:#BEAC5A"></i>전 세계 전자 장난감 한 해치 = 점 64개</span></div>
+    </div>
+    <p class="foot">출처: WEEE Forum·유엔훈련조사연구소(UNITAR) 「보이지 않는 전자폐기물」 조사(2023, <a href="https://weee-forum.org/?p=8418" target="_blank" rel="noopener">WEEE Forum</a>) — 전자 장난감 연 73억 개, 약 32억 kg · <a href="https://www.g-enews.com/article/Global-Biz/2023/11/20231109083608240037926aa152_1" target="_blank" rel="noopener">글로벌이코노믹(2023.11.9)</a> · 재활용률 약 10%는 UNITAR 키스 발데(<a href="https://grist.org/accountability/discarded-toys-are-creating-an-e-waste-disaster-heres-how-to-stop-it/" target="_blank" rel="noopener">Grist</a>). 64배·트럭 대수는 무게로 환산한 값입니다.</p>
   </div>
 </section>
 
@@ -853,6 +871,19 @@ function playLand() {
   replay(svg);
 }
 
+// ----- 전 세계 전자 장난감: 한국 5만 톤(점 1개) 대비 약 320만 톤(점 64개) -----
+function playEtoys() {
+  const svg = $('#etoyHeap');
+  if (!svg.childNodes.length) {
+    drawHeap(svg, Array.from({ length: 64 }, (_, i) => i === 0 ? '#38D665' : '#BEAC5A'), { W: 24, rows: 5, stagger: 22 });
+    svg.children[0].style.setProperty('--d', '0ms');
+  }
+  replay(svg);
+  ['#nEtoy', '#tEtoy'].forEach(sel => { $(sel).dataset.v = 0; });
+  countUp($('#nEtoy'), 7300000000, { dur: 1600, render: v => v >= 7.3e9 ? '73억' : fmt(Math.round(v / 1e8)) + '억' });
+  setTimeout(() => countUp($('#tEtoy'), 3200000, { dur: 1600, render: v => '약 ' + fmt(Math.round(v / 1e4)) + '만' }), reduced ? 0 : 350);
+}
+
 // ----- 1초에 1.27개씩 떨어져 쌓이는 프랑스 장난감 (프랑스 쪽·표지 공용) -----
 const FR_PER_SEC = 1.27; // Planetoscope: 연 4천만 개
 function rainState(box) { return { box, timer: null, t0: 0, dropped: 0, heights: [], today: 0 }; }
@@ -1050,6 +1081,7 @@ function enter(i) {
   if (id === 'mats') { renderMats(false); requestAnimationFrame(() => requestAnimationFrame(() => renderMats(true))); }
   if (id === 'world80') { playStage($('#ten'), layoutTen); $('#n80').dataset.v = 0; setTimeout(() => countUp($('#n80'), 80, { dur: 1400 }), reduced ? 0 : 900); }
   if (id === 'landfill6') playLand();
+  if (id === 'etoys') playEtoys();
   if (id === 'france40m') startRain();
   if (id === 'reuse') playToys();
   if (id === 'korea') playTrucks();
