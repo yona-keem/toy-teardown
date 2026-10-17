@@ -114,9 +114,17 @@ h2 em, h1 em { font-style: normal; color: var(--purple); }
 .sheet-btn .n { font-weight: 500; font-size: 13px; opacity: .85; }
 .sheet-btn.on { background: var(--green); color: var(--ink); }
 .stat.sheet .src-tag { display: inline-block; }
+.row-pick { display: inline-flex; align-items: center; gap: 6px; }
+.row-pick input { width: 6.5em; font: inherit; font-size: 14px; color: var(--ink); background: none; border: 1px solid var(--rule); border-radius: 999px; padding: 6px 12px; outline: none; }
+.row-pick input:focus { border-color: var(--purple); background: var(--purple-l); }
+.row-btn { appearance: none; border: 2px solid var(--purple); background: none; color: var(--purple); border-radius: 999px; padding: 5px 14px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.row-btn:hover { background: var(--purple-l); }
+.row-btn.on { background: var(--green); border-color: var(--green); color: var(--ink); }
+.row-msg { font-size: 13px; color: var(--ink-2); }
+.row-msg.err { color: var(--purple); font-weight: 700; }
 .m-br { display: none; }
 @media (max-width: 600px) { .m-br { display: inline; } }
-@media (max-width: 600px) { .edit-row > span { display: none; } .sheet-btn { font-size: 14px; padding: 7px 14px; } }
+@media (max-width: 600px) { .edit-row > span:not(.row-pick):not(.row-msg) { display: none; } .sheet-btn { font-size: 14px; padding: 7px 14px; } }
 .heap-wrap { flex: 1; min-height: 120px; display: flex; flex-direction: column; justify-content: flex-end; margin-top: 16px; }
 .heap { width: 100%; height: 100%; max-height: 34vh; display: block; }
 .cap { font-size: 12px; color: var(--ink-3); margin-top: 6px; display: flex; gap: 14px; flex-wrap: wrap; }
@@ -177,7 +185,7 @@ h2 em, h1 em { font-style: normal; color: var(--purple); }
 @keyframes roll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
 /* ---------- 갤러리 ---------- */
-.gallery { flex: 1; min-height: 0; overflow-y: auto; margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; align-content: start; padding-bottom: 8px; }
+.gallery { flex: 1; min-height: 0; overflow-y: auto; margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fill, minmax(252px, 276px)); gap: 16px; align-content: start; padding-bottom: 8px; }
 .card { border-top: 1px solid var(--rule); padding-top: 10px; animation: pop .6s both; }
 @keyframes pop { from { opacity: 0; transform: translateY(18px); } }
 .flip { position: relative; aspect-ratio: 1; perspective: 1000px; cursor: pointer; outline-offset: 3px; }
@@ -323,7 +331,7 @@ body.on-purple .next { background: var(--green); color: var(--ink); box-shadow: 
       <div class="stat" data-k="g"><label class="val"><span class="sizer"><input id="iG" size="1" inputmode="numeric" autocomplete="off" aria-label="모은 조각 무게(g)"></span><span class="unit">g</span></label><span>모은 조각 무게<b class="src-tag">직접 입력</b></span></div>
       <div class="stat hot"><span class="val"><span class="num" id="sTrashG">0</span><span class="unit">g</span></span><span>종량제봉투로 가는 무게</span><small class="sub" id="sSec"></small></div>
     </div>
-    <div class="edit-row"><button class="sheet-btn" id="useSheet" aria-pressed="false">오늘 우리가 뜯어본 장난감들 <span class="n" id="sheetN"></span></button><span>숫자를 눌러 직접 고치거나, 버튼을 눌러 제출된 응답 합계로 계산합니다. 모든 쪽에 바로 반영됩니다.</span><button class="reset" id="reset" hidden>↺ 0으로 비우기</button></div>
+    <div class="edit-row"><button class="sheet-btn" id="useSheet" aria-pressed="false">오늘 우리가 뜯어본 장난감들 <span class="n" id="sheetN"></span></button><span class="row-pick"><input id="rowNo" inputmode="numeric" autocomplete="off" placeholder="시트 행 번호" aria-label="응답 시트 행 번호"><button class="row-btn" id="useRow" aria-pressed="false">이 행만 반영</button></span><span class="row-msg" id="rowMsg" aria-live="polite"></span><span>숫자를 눌러 직접 고치거나, 버튼을 눌러 제출된 응답 합계로 계산합니다. 모든 쪽에 바로 반영됩니다.</span><button class="reset" id="reset" hidden>↺ 0으로 비우기</button></div>
     <div class="heap-wrap">
       <div class="stage" id="coverRain" aria-label="프랑스에서 1초에 1.3개씩 버려지는 장난감과 오늘 우리가 뜯은 장난감"></div>
       <div class="cap cover-cap"><span id="coverCap"></span><button class="tease" id="tease">프랑스가 그렇다면, <b>한국은 어떨까요?</b> →</button></div>
@@ -606,13 +614,18 @@ const seen = new Set();
 // 비워 두면(null) 0, 시트 반영(sheet) 중이면 응답 합계를 쓴다. 이 기기 브라우저에만 저장된다.
 const MANUAL_KEY = 'toyTeardown.manual.v2';
 // sheet: true면 비어 있는 칸을 응답 시트 합계(장난감 수 = 응답 수, 무게 = 재질 무게 합)로 채운다
-let manual = { toys: null, g: null, pct: null, sheet: false };
+// row: 응답 시트 행 번호. 정하면 그 행 하나만으로 계산한다
+let manual = { toys: null, g: null, pct: null, sheet: false, row: null };
 try { manual = { ...manual, ...JSON.parse(localStorage.getItem(MANUAL_KEY) || '{}') }; } catch (e) {}
 const saveManual = () => { try { localStorage.setItem(MANUAL_KEY, JSON.stringify(manual)); } catch (e) {} };
 manual.pct = null; // 비율은 직접 입력하지 않고 제출된 응답을 따른다
-const hasManual = () => manual.toys != null || manual.g != null || manual.pct != null || manual.sheet;
+const hasManual = () => manual.toys != null || manual.g != null || manual.pct != null || manual.sheet || manual.row != null;
 let liveTotal = 0; // 제출된 응답의 재질 무게 합(g)
-const sheetVal = key => manual.sheet ? (key === 'toys' ? rows.length : liveTotal) : 0;
+// 시트 행 번호 → 응답. 1행은 제목이라 2행이 첫 응답 (웹앱이 row를 주면 그 값을 쓴다)
+const rowAt = n => rows.some(r => r.row) ? rows.find(r => Number(r.row) === n) : rows[n - 2];
+const usedRows = () => manual.row != null ? [rowAt(manual.row)].filter(Boolean) : rows;
+const fromSheet = () => manual.sheet || manual.row != null;
+const sheetVal = key => fromSheet() ? (key === 'toys' ? usedRows().length : liveTotal) : 0;
 
 // 제출된 응답이 없을 때 재질 비율의 기본값(샘플 6건 합계)
 const DEFAULT_SUMS = Object.fromEntries(MATERIALS.map(m => [m.key, SAMPLE.reduce((a, r) => a + (Number(r[m.key]) || 0), 0)]));
@@ -625,7 +638,7 @@ function groupOf(s) {
 
 function compute() {
   const live = Object.fromEntries(MATERIALS.map(m => [m.key, 0]));
-  rows.forEach(r => MATERIALS.forEach(m => live[m.key] += Number(r[m.key]) || 0));
+  usedRows().forEach(r => MATERIALS.forEach(m => live[m.key] += Number(r[m.key]) || 0));
   const liveGroup = groupOf(live);
   liveTotal = GROUPS.reduce((a, g) => a + liveGroup[g], 0);
   toyCount = manual.toys != null ? manual.toys : sheetVal('toys'); // 직접 입력·시트 반영 전에는 0개
@@ -674,13 +687,24 @@ function renderCover(animate) {
   $$('.stat[data-k]').forEach(s => {
     const own = manual[s.dataset.k] != null;
     s.classList.toggle('manual', own);
-    s.classList.toggle('sheet', !own && manual.sheet);
-    s.querySelector('.src-tag').textContent = own ? '직접 입력' : '응답 합계';
+    s.classList.toggle('sheet', !own && fromSheet());
+    s.querySelector('.src-tag').textContent = own ? '직접 입력' : manual.row != null ? manual.row + '행' : '응답 합계';
   });
+  const sheetOn = !!manual.sheet && manual.row == null;
   const sb = $('#useSheet');
-  sb.classList.toggle('on', !!manual.sheet);
-  sb.setAttribute('aria-pressed', String(!!manual.sheet));
-  $('#sheetN').textContent = rows.length ? `응답 ${fmt(rows.length)}건 · ${grams(liveTotal)}` : '아직 응답 없음';
+  sb.classList.toggle('on', sheetOn);
+  sb.setAttribute('aria-pressed', String(sheetOn));
+  const rb = $('#useRow'), rowOn = manual.row != null;
+  rb.classList.toggle('on', rowOn);
+  rb.setAttribute('aria-pressed', String(rowOn));
+  if (rowOn && document.activeElement !== $('#rowNo')) $('#rowNo').value = manual.row;
+  if (rowOn) {
+    const r = rowAt(manual.row);
+    $('#rowMsg').className = 'row-msg' + (r ? '' : ' err');
+    $('#rowMsg').textContent = r ? `${manual.row}행 · ${r.toy} · ${grams(liveTotal)}` : `${manual.row}행에 아직 응답이 없습니다`;
+  } else if (!$('#rowMsg').classList.contains('err')) $('#rowMsg').textContent = '';
+  const allG = rows.reduce((a, r) => a + MATERIALS.reduce((b, m) => b + (Number(r[m.key]) || 0), 0), 0);
+  $('#sheetN').textContent = rows.length ? `응답 ${fmt(rows.length)}건 · ${grams(allG)}` : '아직 응답 없음';
   $('#reset').hidden = !hasManual();
   updateCoverRain();
 }
@@ -1142,13 +1166,30 @@ Object.entries(INPUTS).forEach(([key, sel]) => {
 });
 $('#useSheet').addEventListener('click', () => {
   // 직접 입력한 값을 지우고 응답 시트 합계로 전체를 다시 계산한다 (이후 새 응답도 15초마다 반영)
-  manual = { toys: null, g: null, pct: null, sheet: true };
+  manual = { toys: null, g: null, pct: null, sheet: true, row: null };
+  $('#rowNo').value = ''; $('#rowMsg').className = 'row-msg'; $('#rowMsg').textContent = '';
   saveManual();
   renderAll();
   renderCover(true);
 });
+// 시트 행 번호를 넣으면 그 행 하나만 1쪽(과 모든 쪽)에 반영한다
+function useRow() {
+  const n = parseInt($('#rowNo').value.replace(/[^\d]/g, ''), 10);
+  const msg = $('#rowMsg');
+  msg.className = 'row-msg err';
+  if (!n || n < 2) { msg.textContent = '2행부터 입력해 주세요 (1행은 제목 줄)'; return; }
+  if (!rowAt(n)) { msg.textContent = `${n}행에 아직 응답이 없습니다`; return; }
+  manual = { toys: null, g: null, pct: null, sheet: false, row: n };
+  saveManual();
+  renderAll();
+  renderCover(true);
+}
+$('#useRow').addEventListener('click', useRow);
+$('#rowNo').addEventListener('keydown', e => { if (e.key === 'Enter') useRow(); });
+
 $('#reset').addEventListener('click', () => {
-  manual = { toys: null, g: null, pct: null, sheet: false };
+  manual = { toys: null, g: null, pct: null, sheet: false, row: null };
+  $('#rowNo').value = ''; $('#rowMsg').className = 'row-msg'; $('#rowMsg').textContent = '';
   saveManual();
   renderAll();
   renderCover(true);
